@@ -9,6 +9,11 @@ license = "MIT"
 name = "rustspaced"
 path = "src/main.rs"
 
+[[bin]]
+name = "rustspace"
+path = "src/cli.rs"
+
 [dependencies]
 serde = { version = "1.0.215", features = ["derive"] }
 toml = "0.8.19"
+libc = "0.2.169"

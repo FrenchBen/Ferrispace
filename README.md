@@ -63,7 +63,7 @@ defined in [USE-CASES.md](USE-CASES.md):
 
 ```sh
 # Run directly (Ctrl-C to stop)
-cargo run
+cargo run --bin rustspaced
 
 # Or run the compiled binary
 ./target/debug/rustspaced
@@ -72,6 +72,42 @@ cargo run
 On startup the daemon logs its resolved config to stderr and enters its event
 loop. In Phase 1 no windows are managed yet — the loop is a placeholder for
 the hotkey and IPC channels coming in later phases.
+
+---
+
+## Managing the daemon
+
+The `rustspace` CLI controls the daemon lifecycle:
+
+```sh
+rustspace start   # start rustspaced in the background
+rustspace stop    # stop a running daemon (sends SIGTERM, waits up to 3 s)
+rustspace status  # report whether the daemon is running and its PID
+```
+
+`start` and `stop` require both binaries to be built (`cargo build`).
+`start` looks for `rustspaced` in the same directory as `rustspace`.
+
+Example session:
+
+```
+$ ./target/debug/rustspace start
+rustspaced started (pid 12345).
+
+$ ./target/debug/rustspace status
+rustspaced: running (pid 12345).
+  PID file : /Users/you/.local/share/rustspace/rustspaced.pid
+
+$ ./target/debug/rustspace stop
+rustspaced stopped (pid 12345).
+
+$ ./target/debug/rustspace status
+rustspaced: stopped (no PID file).
+```
+
+The PID file is stored at:
+- `$XDG_RUNTIME_DIR/rustspace/rustspaced.pid` (if `XDG_RUNTIME_DIR` is set)
+- `~/.local/share/rustspace/rustspaced.pid` (fallback)
 
 ---
 
@@ -209,7 +245,9 @@ RustSpace/
 │   └── default-config.toml    — built-in defaults (compiled into binary)
 └── src/
     ├── config.rs               — config structs, TOML parsing, merge logic
-    └── main.rs                 — daemon entry point, dispatch stub, tests
+    ├── pid.rs                  — PID file helpers (read/write/remove, liveness check)
+    ├── cli.rs                  — rustspace CLI binary (start/stop/status)
+    └── main.rs                 — rustspaced daemon entry point, dispatch stub, tests
 ```
 
 Upcoming modules (see `RUST.md` for the full build plan):

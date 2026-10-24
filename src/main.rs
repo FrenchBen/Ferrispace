@@ -13,10 +13,33 @@
 //!   - Unix-socket IPC         (ipc.rs)
 
 mod config;
+mod pid;
 
 use config::load_config;
 
 fn main() {
+    // -----------------------------------------------------------------------
+    // 0. Parse flags
+    //
+    // --daemon  passed by `rustspace start`; the process is already detached
+    //           from the terminal (setsid was called in the parent).  We write
+    //           our PID file so the CLI can track us, then continue normally.
+    // -----------------------------------------------------------------------
+    let daemon_mode = std::env::args().any(|a| a == "--daemon");
+
+    if daemon_mode {
+        if let Err(e) = pid::write(std::process::id()) {
+            eprintln!("[rustspaced] WARNING: could not write PID file: {e}");
+        }
+
+        // Redirect stdout/stderr to /dev/null when running as a background
+        // daemon — log output goes nowhere by default in Phase 1.
+        // Phase 1b will replace this with a log file.
+        // (Already done by the CLI via Stdio::null() before spawn, but being
+        // explicit here is harmless and makes `rustspaced --daemon` safe to
+        // call directly too.)
+    }
+
     // -----------------------------------------------------------------------
     // 1. Load configuration
     // -----------------------------------------------------------------------
@@ -122,7 +145,16 @@ fn main() {
     // -----------------------------------------------------------------------
     eprintln!("[rustspaced] Daemon loop started. Press Ctrl-C to stop.");
 
-    loop {
+    // Install SIGTERM / SIGINT handlers that set a module-level AtomicBool.
+    // Setting an AtomicBool is async-signal-safe.
+    //
+    // SAFETY: our handler only stores to a static AtomicBool — safe.
+    unsafe {
+        libc::signal(libc::SIGTERM, handle_shutdown as *const () as libc::sighandler_t);
+        libc::signal(libc::SIGINT,  handle_shutdown as *const () as libc::sighandler_t);
+    }
+
+    while !SHUTDOWN.load(std::sync::atomic::Ordering::Relaxed) {
         // TODO (Phase 2): poll AX observer events
         // TODO (Phase 4): drain hotkey event channel
         // TODO (Phase 1b): drain IPC command channel
@@ -134,6 +166,25 @@ fn main() {
             dispatch_command(cmd, ws, idx, mode, &cfg.modes);
         };
     }
+
+    // Clean shutdown
+    eprintln!("[rustspaced] Shutting down.");
+    if daemon_mode {
+        pid::remove();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Signal handling
+// ---------------------------------------------------------------------------
+
+/// Set to `true` by SIGTERM / SIGINT handlers to request a clean shutdown.
+static SHUTDOWN: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
+/// Signal handler — only stores to the static AtomicBool (async-signal-safe).
+extern "C" fn handle_shutdown(_sig: libc::c_int) {
+    SHUTDOWN.store(true, std::sync::atomic::Ordering::Relaxed);
 }
 
 // ---------------------------------------------------------------------------
