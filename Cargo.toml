@@ -1,0 +1,14 @@
+[package]
+name = "rustspace"
+version = "0.1.0"
+edition = "2021"
+description = "AeroSpace-inspired tiling window manager daemon in Rust"
+license = "MIT"
+
+[[bin]]
+name = "rustspaced"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1.0.215", features = ["derive"] }
+toml = "0.8.19"

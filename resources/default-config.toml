@@ -1,0 +1,121 @@
+# RustSpace default configuration
+# This file is compiled into the daemon binary and applied before the user config.
+# Place user overrides in ~/.config/rustspace/config.toml
+#
+# Key names follow AeroSpace conventions:
+#   Modifiers: cmd, alt, ctrl, shift
+#   Letters: a-z  |  Numbers: 0-9  |  Arrows: left, down, up, right
+#   Special: minus, equal, period, comma, slash, backslash, quote,
+#            semicolon, backtick, space, enter, esc, backspace, tab
+
+config-version = 2
+
+# Commands run once when the daemon starts (empty list by default)
+after-startup-command = []
+
+# Accordion-layout padding in pixels (mirrors AeroSpace)
+accordion-padding = 30
+
+# Default layout for each workspace's root container: "tiles" | "accordion"
+default-root-container-layout = "tiles"
+
+# Default split axis: "horizontal" | "vertical" | "auto"
+# "auto" picks horizontal for wide monitors, vertical for tall monitors
+default-root-container-orientation = "auto"
+
+# Whether the focused window changes as the mouse moves over windows
+[focus-follows-mouse]
+enabled = false
+
+# Keyboard layout for key-chord resolution
+[key-mapping]
+preset = "qwerty"
+
+# Pixel gaps between windows (inner) and between windows and screen edges (outer)
+[gaps]
+[gaps.inner]
+horizontal = 0
+vertical   = 0
+
+[gaps.outer]
+left   = 0
+right  = 0
+top    = 0
+bottom = 0
+
+# Workspaces that remain alive even when empty.
+# Phase-1: simple numbered + lettered names mirroring AeroSpace defaults.
+persistent-workspaces = [
+    "1", "2", "3", "4", "5",
+    "6", "7", "8", "9",
+]
+
+# ---------------------------------------------------------------------------
+# Binding modes
+# ---------------------------------------------------------------------------
+# The 'main' mode is always active unless another mode is entered.
+# Each binding maps a key-chord to a command string (or list of commands).
+
+[mode.main.binding]
+# Layout cycling
+alt-slash = "layout tiles horizontal vertical"
+alt-comma = "layout accordion horizontal vertical"
+
+# Focus movement (vim-style)
+alt-h = "focus left"
+alt-j = "focus down"
+alt-k = "focus up"
+alt-l = "focus right"
+
+# Window movement
+alt-shift-h = "move left"
+alt-shift-j = "move down"
+alt-shift-k = "move up"
+alt-shift-l = "move right"
+
+# Resize
+alt-minus = "resize smart -50"
+alt-equal = "resize smart +50"
+
+# Workspace switching
+alt-1 = "workspace 1"
+alt-2 = "workspace 2"
+alt-3 = "workspace 3"
+alt-4 = "workspace 4"
+alt-5 = "workspace 5"
+alt-6 = "workspace 6"
+alt-7 = "workspace 7"
+alt-8 = "workspace 8"
+alt-9 = "workspace 9"
+
+# Move focused window to workspace
+alt-shift-1 = "move-node-to-workspace 1"
+alt-shift-2 = "move-node-to-workspace 2"
+alt-shift-3 = "move-node-to-workspace 3"
+alt-shift-4 = "move-node-to-workspace 4"
+alt-shift-5 = "move-node-to-workspace 5"
+alt-shift-6 = "move-node-to-workspace 6"
+alt-shift-7 = "move-node-to-workspace 7"
+alt-shift-8 = "move-node-to-workspace 8"
+alt-shift-9 = "move-node-to-workspace 9"
+
+# Cycle workspaces
+alt-tab       = "workspace-back-and-forth"
+alt-shift-tab = "move-workspace-to-monitor --wrap-around next"
+
+# Enter service mode
+alt-shift-semicolon = "mode service"
+
+# ---------------------------------------------------------------------------
+# Service mode — maintenance bindings
+# ---------------------------------------------------------------------------
+[mode.service.binding]
+esc        = ["reload-config", "mode main"]
+r          = ["flatten-workspace-tree", "mode main"]
+f          = ["layout floating tiling", "mode main"]
+backspace  = ["close-all-windows-but-current", "mode main"]
+
+alt-shift-h = ["join-with left",  "mode main"]
+alt-shift-j = ["join-with down",  "mode main"]
+alt-shift-k = ["join-with up",    "mode main"]
+alt-shift-l = ["join-with right", "mode main"]
